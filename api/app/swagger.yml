@@ -1,0 +1,386 @@
+swagger: "2.0"
+info:
+  title: Movie Database
+  description: This API provides endpoints for accessing a movies and actors database.
+  version: "0.1"
+  
+securityDefinitions:
+  basicAuth:
+    type: basic
+
+  
+definitions:
+  Actor:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      gender: 
+        type: string
+      birth_date:
+        type: string
+        format: date
+      films:
+        type: array
+        items:
+          type: object
+          properties:
+            film_id:
+              type: integer
+            film_name:
+              type: string
+  ActorRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      gender:
+        type: string
+      birth_date:
+        type: string
+        format: date
+  Film:
+    type: object
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+      description:
+        type: string
+      release_date:
+        type: string
+      rating:
+        type: integer
+      actors:
+        type: array
+        items:
+          type: object
+          properties:
+            actor_id:
+              type: integer
+            actor_name:
+              type: string
+  FilmRequest:
+    type: object
+    properties:
+      title:
+        type: string
+      description:
+        type: string
+      release_date:
+        type: string
+      actors_ids:
+        type: array
+        items:
+          type: integer
+  User:
+    type: object
+    properties:
+      login:
+        type: string
+      hashed_password:
+        type: string
+      role:
+        type: string
+  UserRequest:
+    type: object
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+        
+responses:
+  UnauthorizedError:
+    description: Authentication information is missing or invalid
+    headers:
+      WWW_Authenticate:
+        type: string
+        
+paths:
+  /actors:
+    get:
+      summary: Get all actors
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description: ok
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Actor"
+        401:
+          $ref: '#/responses/UnauthorizedError'
+    post:
+      summary: Create a new actor
+      security:
+        - basicAuth: []
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: actor
+          description: The actor to add.
+          schema:
+            $ref: '#/definitions/ActorRequest'
+      responses:
+        201:
+          description: Created
+          headers:
+            Location:
+              type: string
+              format: uri
+              description: URI of a created resource
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+  /actors/{id}:
+    get:
+      summary: Get actor by id
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+      responses:
+        200:
+          description: ok
+          schema:
+            $ref: '#/definitions/Actor'
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        404:
+          description: Resource not found.
+    patch:
+      summary: Change actor information
+      security:
+        - basicAuth: []
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+        - in: body
+          name: actor
+          description: New information about actor.
+          schema:
+            $ref: '#/definitions/ActorRequest'
+          required: true
+      responses:
+        200:
+          description: ok
+          schema:
+            $ref: '#/definitions/Actor'
+        400:
+          description: Bad request
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+        404:
+          description: Resource not found
+    delete:
+      summary: Delete actor
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+      responses:
+        204:
+          description: No content
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+        404:
+          description: Resource not found
+  /films:
+    get:
+      summary: Get a list of films
+      security:
+        - basicAuth: []
+      parameters:
+        - in: query
+          name: order
+          type: string
+          description: Can be asc; desc.
+        - in: query
+          name: orderby
+          type: string
+          description: Can be title; date; rating.
+        - in: query
+          name: actor
+          type: string
+          description: Used to search films by actor name fragment.
+        - in: query
+          name: title
+          type: string
+          description: Used to search films by title fragment.
+      responses:
+        200:
+          description: ok
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Film"
+        401:
+          $ref: '#/responses/UnauthorizedError'
+    post:
+      summary: Add a film
+      security:
+        - basicAuth: []
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: film
+          description: The film to add.
+          schema:
+            $ref: '#/definitions/FilmRequest'
+      responses:
+        201:
+          description: Created
+          headers:
+            Location:
+              type: string
+              format: uri
+              description: URI of a created resource
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+  /films/{id}:
+    get:
+      summary: Get film by id
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+      responses:
+        200:
+          description: ok
+          schema:
+            $ref: '#/definitions/Film'
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        404:
+          description: Resource not found.
+    patch:
+      summary: Change film information
+      security:
+        - basicAuth: []
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+        - in: body
+          name: film
+          description: New information about film.
+          schema:
+            $ref: '#/definitions/FilmRequest'
+          required: true
+      responses:
+        200:
+          description: ok
+          schema:
+            $ref: '#/definitions/Film'
+        400:
+          description: Bad request
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+        404:
+          description: Resource not found
+    delete:
+      summary: Delete film
+      security:
+        - basicAuth: []
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+      responses:
+        204:
+          description: No content
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+        404:
+          description: Resource not found
+  /users:
+    get:
+      summary: Get all users
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description: ok
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+        401:
+          $ref: '#/responses/UnauthorizedError'
+        403:
+          description: Forbidden
+    post:
+      summary: Register a new user
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: user
+          description: The user to add.
+          schema:
+            $ref: '#/definitions/UserRequest'
+      responses:
+        201:
+          description: Created
+        409:
+          description: Conflict
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
