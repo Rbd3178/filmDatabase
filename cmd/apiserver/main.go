@@ -1,11 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"log"
-	"os"
 
+	"github.com/BurntSushi/toml"
 	"github.com/Rbd3178/filmDatabase/internal/app/apiserver"
 )
 
@@ -14,17 +13,15 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configPath, "config-path", "configs/apiserver.json", "path to configuration file")
+	flag.StringVar(&configPath, "config-path", "configs/apiserver.toml", "path to configuration file")
 }
 
 func main() {
 	flag.Parse()
-	jsonData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	config := apiserver.NewConfig()
-	if err := json.Unmarshal(jsonData, &config); err != nil {
+	_, err := toml.DecodeFile(configPath, config)
+	if err != nil {
 		log.Fatal(err)
 	}
 	
