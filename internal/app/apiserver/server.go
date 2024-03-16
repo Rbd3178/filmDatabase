@@ -51,9 +51,12 @@ func (s *server) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	if len(req.Login) < 1 || len(req.Login) > 50 || len(req.Password) < 6 || len(req.Password) > 50 {
+		http.Error(w, "Invalid login or password", http.StatusUnprocessableEntity)
+		return
+	}
 	if err := s.database.User().Create(req); err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -70,7 +73,6 @@ func (s *server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	if !exists {
 		return
 	}
-
 	if !isAdmin {
 		http.Error(w, "Not enough rights", http.StatusForbidden)
 		return
