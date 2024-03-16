@@ -3,7 +3,7 @@ package apiserver
 import (
 	"net/http"
 
-	"github.com/Rbd3178/filmDatabase/internal/app/dbs/postgres"
+	"github.com/Rbd3178/filmDatabase/internal/app/store/postgres"
 	"github.com/jmoiron/sqlx"
 )
 

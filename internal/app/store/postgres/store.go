@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/Rbd3178/filmDatabase/internal/app/dbs"
+	"github.com/Rbd3178/filmDatabase/internal/app/store"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/lib/pq"
@@ -21,7 +21,7 @@ func New(db *sqlx.DB) *Store {
 }
 
 // User
-func (s *Store) User() dbs.UserRepository {
+func (s *Store) User() store.UserRepository {
 	if s.userRepository != nil {
 		return s.userRepository
 	}

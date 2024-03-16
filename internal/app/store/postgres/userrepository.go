@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/Rbd3178/filmDatabase/internal/app/entities"
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 )
@@ -30,12 +29,28 @@ func (r *UserRepository) Create(u *models.UserRequest) error {
 	return nil
 }
 
-// FindByLogin
-func (r *UserRepository) FindByLogin(login string) (*entities.User, error) {
-	u := &entities.User{}
-	err := r.store.db.Select(u, "SELECT login, hashed_password, is_admin FROM users WHERE login = $1", &login)
+// Find
+func (r *UserRepository) Find(login string) (*models.User, error) {
+	u := &models.User{}
+	err := r.store.db.Get(
+		u, 
+		"SELECT * FROM users WHERE login = $1", 
+		&login,)
 	if err != nil {
 		return nil, err
 	}
 	return u, nil
+}
+
+// GetAll
+func (r *UserRepository) GetAll() ([]models.User, error) {
+	users := make([]models.User, 0)
+	err := r.store.db.Select(
+		&users,
+		"SELECT * FROM users",
+	)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

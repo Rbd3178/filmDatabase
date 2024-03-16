@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: Movie Database
   description: This API provides endpoints for accessing a movies and actors database.
-  version: "0.1"
+  version: 0.0.2
   
 securityDefinitions:
   basicAuth:
@@ -344,6 +344,8 @@ paths:
           $ref: '#/responses/UnauthorizedError'
         403:
           description: Forbidden
+    
+  /register:      
     post:
       summary: Register a new user
       consumes:
@@ -358,29 +360,5 @@ paths:
         201:
           description: Created
         409:
-          description: Conflict
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+          description: Conflict      
+   
