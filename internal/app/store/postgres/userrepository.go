@@ -1,8 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
+
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
+	"github.com/Rbd3178/filmDatabase/internal/app/store"
 )
 
 // UserRepository
@@ -33,10 +36,13 @@ func (r *UserRepository) Create(u *models.UserRequest) error {
 func (r *UserRepository) Find(login string) (*models.User, error) {
 	u := &models.User{}
 	err := r.store.db.Get(
-		u, 
-		"SELECT * FROM users WHERE login = $1", 
-		&login,)
+		u,
+		"SELECT * FROM users WHERE login = $1",
+		&login)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.ErrRecordNotFound
+		}
 		return nil, err
 	}
 	return u, nil

@@ -4,5 +4,5 @@ import "errors"
 
 var (
 	// ErrRecordNotFound ...
-	ErrRecordNotFound = errors.New("sql: no rows in result set")
+	ErrRecordNotFound = errors.New("record not found")
 )

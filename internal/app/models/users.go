@@ -4,7 +4,7 @@ package models
 type User struct {
 	Login          string `db:"login" json:"login"`
 	HashedPassword string `db:"hashed_password" json:"hashed_password"`
-	IsAdmin        bool `db:"is_admin" json:"is_admin"`
+	IsAdmin        bool   `db:"is_admin" json:"is_admin"`
 }
 
 // UserRequest
