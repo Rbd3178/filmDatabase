@@ -18,9 +18,20 @@ type Actor struct {
 	Films     []FilmBasic `json:"films"`
 }
 
-// Validate
-func (r *ActorRequest) Validate() bool {
+// ValidateForInsert
+func (r *ActorRequest) ValidateForInsert() bool {
 	_, err := time.Parse("2006-01-02", r.BirthDate)
 	validBirthDate := err == nil || r.BirthDate == ""
-	return len(r.Name) >= 1 && len(r.Name) <= 100 && len(r.Gender) <= 20 && validBirthDate
+	validName := len(r.Name) >= 1 && len(r.Name) <= 100
+	validGender := len(r.Gender) <= 20
+	return validName && validGender && validBirthDate
+}
+
+// ValidateForUpdate
+func (r *ActorRequest) ValidateForUpdate() bool {
+	_, err := time.Parse("2006-01-02", r.BirthDate)
+	validBirthDate := err == nil || r.BirthDate == ""
+	validName := len(r.Name) <= 100
+	validGender := len(r.Gender) <= 20
+	return validName && validGender && validBirthDate
 }
