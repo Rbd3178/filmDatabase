@@ -75,8 +75,11 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 		}
 
 		rowsAffected, err := res.RowsAffected()
-		if rowsAffected == 0 {
+		if err != nil {
 			return 0, false, errors.Wrap(err, "rows affected films_x_actors")
+		}
+		if rowsAffected == 0 {
+			return 0, false, nil
 		}
 	}
 
