@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
@@ -37,6 +39,7 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/register", s.handleRegister)
 	s.router.HandleFunc("/users", s.handleUsers)
 	s.router.HandleFunc("/actors", s.handleActors)
+	s.router.HandleFunc("/actors/", s.handleActorsID)
 }
 
 func (s *server) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -129,19 +132,16 @@ func (s *server) getUsers(w http.ResponseWriter) {
 }
 
 func (s *server) handleActors(w http.ResponseWriter, r *http.Request) {
+	registered, isAdmin := s.authenticateUser(w, r)
+	if !registered {
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		registered, _ := s.authenticateUser(w, r)
-		if !registered {
-			return
-		}
 		s.getActors(w)
 
 	case http.MethodPost:
-		registered, isAdmin := s.authenticateUser(w, r)
-		if !registered {
-			return
-		}
 		if !isAdmin {
 			http.Error(w, "Not enough rights", http.StatusForbidden)
 			return
@@ -161,7 +161,6 @@ func (s *server) getActors(w http.ResponseWriter) {
 	}
 
 	jsonData, err := json.Marshal(actors)
-	
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -176,7 +175,7 @@ func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if !req.Validate() {
+	if !req.ValidateForInsert() {
 		http.Error(w, "Invalid fields in payload", http.StatusUnprocessableEntity)
 		return
 	}
@@ -188,4 +187,99 @@ func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Location: ", fmt.Sprintf("/actors/%d", id))
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Actor successfully added"))
+}
+
+func (s *server) handleActorsID(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) != 3 {
+		http.NotFound(w, r)
+		return
+	}
+
+	id, err := strconv.Atoi(parts[2])
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	registered, isAdmin := s.authenticateUser(w, r)
+	if !registered {
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		s.findActor(w, r, id)
+
+	case http.MethodPatch:
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		s.modifyActor(w, r, id)
+
+	case http.MethodDelete:
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		s.deleteActor(w, r, id)
+	}
+}
+
+func (s *server) findActor(w http.ResponseWriter, r *http.Request, id int) {
+	actor, err := s.database.Actor().Find(id)
+	if err == store.ErrRecordNotFound {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonData, err := json.Marshal(actor)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
+	req := &models.ActorRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !req.ValidateForUpdate() {
+		http.Error(w, "Invalid fields in payload", http.StatusUnprocessableEntity)
+		return
+	}
+
+	done, err := s.database.Actor().Modify(id, req)
+	if !done {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Actor information successfully modified"))
+}
+
+func (s *server) deleteActor(w http.ResponseWriter, r *http.Request, id int) {
+	done, err := s.database.Actor().Delete(id)
+	if !done {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
