@@ -2,6 +2,16 @@ package models
 
 import "time"
 
+// Film
+type Film struct {
+	ID          int          `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	ReleaseDate string       `json:"release_date"`
+	Rating      float64      `json:"rating"`
+	Actors      []ActorBasic `json:"actors"`
+}
+
 // FilmRequest
 type FilmRequest struct {
 	Title       string  `json:"title"`
