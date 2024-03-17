@@ -137,31 +137,32 @@ func (r *FilmRepository) getAll(tx *sqlx.Tx, orderBy string, order string, searc
 	}
 
 	var idsActorSearch = make([]int, 0)
-	err = tx.Select(
-		&idsActorSearch,
-		`SELECT
+	var idsMap = make(map[int]struct{})
+	if searchActor != "" {
+		err = tx.Select(
+			&idsActorSearch,
+			`SELECT
 			f.id
 		FROM
 			films f
 		LEFT JOIN
 			films_x_actors fxa ON fxa.film_id = f.id
 		LEFT JOIN
-			actors a ON a.id = fxa.actor_id` + fmt.Sprintf(" WHERE a.name ILIKE '%%%s%%'", searchActor),
-	)
+			actors a ON a.id = fxa.actor_id`+fmt.Sprintf(" WHERE a.name ILIKE '%%%s%%'", searchActor),
+		)
 
-	if err != nil {
-		return nil, errors.Wrap(err, "select ids actor search")
+		if err != nil {
+			return nil, errors.Wrap(err, "select ids actor search")
+		}
+
+		for _, id := range idsActorSearch {
+			idsMap[id] = struct{}{}
+		}
 	}
-
-	var idsMap = make(map[int]struct{})
-	for _, id := range idsActorSearch {
-        idsMap[id] = struct{}{}
-    }
-
 	films := make([]models.Film, 0)
 	curID := -1
 	for _, rawFilm := range rawFilms {
-		if _, ok := idsMap[rawFilm.ID]; !ok {
+		if _, ok := idsMap[rawFilm.ID]; !ok && searchActor != "" {
 			continue
 		}
 		if rawFilm.ID != curID {
