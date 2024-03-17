@@ -163,6 +163,14 @@ func (r *ActorRepository) Delete(id int) (done bool, err error) {
 }
 
 func (r *ActorRepository) delete(tx *sqlx.Tx, id int) (bool, error) {
+	_, err := tx.Exec(
+		"DELETE FROM films_x_actors WHERE actor_id = $1",
+		id,
+	)
+	if err != nil {
+		return false, errors.Wrap(err, "delete from films_x_actors")
+	}
+
 	res, err := tx.Exec(
 		"DELETE FROM actors WHERE id = $1",
 		id,
@@ -177,14 +185,7 @@ func (r *ActorRepository) delete(tx *sqlx.Tx, id int) (bool, error) {
 	if rowsAffected == 0 {
 		return false, nil
 	}
-
-	_, err = tx.Exec(
-		"DELETE FROM films_x_actors WHERE actor_id = $1",
-		id,
-	)
-	if err != nil {
-		return false, errors.Wrap(err, "delete from films_x_actors")
-	}
+	
 	return true, nil
 }
 

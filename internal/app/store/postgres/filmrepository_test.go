@@ -93,3 +93,34 @@ func TestFilmRepository_GetAll(t *testing.T) {
 		assert.Contains(t, film.Actors, models.ActorBasic{ActorID: actorID1, Name: actorReq1.Name})
 	}
 }
+
+func TestFilmRepository_Delete(t *testing.T) {
+	db, teardown := postgres.TestDB(t, databaseURL)
+	defer teardown("films_x_actors, actors, films")
+
+	s := postgres.New(db)
+
+	actorReq := &models.ActorRequest{
+		Name:      "Tom Hanks",
+		Gender:    "male",
+		BirthDate: "1956-07-09",
+	}
+	actorID, _ := s.Actor().Create(actorReq)
+
+	filmReq := &models.FilmRequest{
+		Title: "Cool title",
+		Description: "Detailed description",
+		ReleaseDate: "2020-01-01",
+		Rating: 7.8,
+		Actors_IDs: []int{actorID},
+	}
+	filmId, _, _ := s.Film().Create(filmReq)
+
+	done, err := s.Film().Delete(filmId)
+	assert.NoError(t, err)
+	assert.True(t, done)
+
+	done, err = s.Actor().Delete(filmId)
+	assert.NoError(t, err)
+	assert.False(t, done)
+}

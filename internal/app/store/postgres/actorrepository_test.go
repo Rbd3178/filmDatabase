@@ -56,7 +56,7 @@ func TestActorRepository_Modify(t *testing.T) {
 
 func TestActorRepository_Delete(t *testing.T) {
 	db, teardown := postgres.TestDB(t, databaseURL)
-	defer teardown("actors")
+	defer teardown("films_x_actors, actors, films")
 
 	s := postgres.New(db)
 
@@ -65,8 +65,17 @@ func TestActorRepository_Delete(t *testing.T) {
 		Gender:    "male",
 		BirthDate: "1956-07-09",
 	}
-
 	id, _ := s.Actor().Create(actorReq)
+
+	filmReq := &models.FilmRequest{
+		Title: "Cool title",
+		Description: "Detailed description",
+		ReleaseDate: "2020-01-01",
+		Rating: 6.8,
+		Actors_IDs: []int{id},
+	}
+	s.Film().Create(filmReq)
+	
 
 	done, err := s.Actor().Delete(id)
 	assert.NoError(t, err)
