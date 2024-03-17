@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
+	"github.com/Rbd3178/filmDatabase/internal/app/store"
 	"github.com/Rbd3178/filmDatabase/internal/app/store/postgres"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,9 +22,8 @@ func TestActorRepository_Create(t *testing.T) {
 		BirthDate: "1956-07-09",
 	}
 
-	id, done, err := s.Actor().Create(actorReq)
+	id, err := s.Actor().Create(actorReq)
 	assert.NoError(t, err)
-	assert.True(t, done)
 	assert.NotNil(t, id)
 }
 
@@ -38,7 +39,7 @@ func TestActorRepository_Modify(t *testing.T) {
 		BirthDate: "1959-07-09",
 	}
 
-	id, _, _ := s.Actor().Create(actorReq)
+	id, _ := s.Actor().Create(actorReq)
 
 	actorReqMod := &models.ActorRequest{
 		Name:      "Tom Hanks",
@@ -66,7 +67,7 @@ func TestActorRepository_Delete(t *testing.T) {
 		BirthDate: "1956-07-09",
 	}
 
-	id, _, _ := s.Actor().Create(actorReq)
+	id, _ := s.Actor().Create(actorReq)
 
 	done, err := s.Actor().Delete(id)
 	assert.NoError(t, err)
@@ -89,7 +90,7 @@ func TestActorRepository_Find(t *testing.T) {
 		BirthDate: "1956-07-09",
 	}
 
-	id, _, _ := s.Actor().Create(actorReq)
+	id, _ := s.Actor().Create(actorReq)
 
 	filmReq1 := &models.FilmRequest{
 		Title: "Cool title",
@@ -110,11 +111,14 @@ func TestActorRepository_Find(t *testing.T) {
 	filmID1, _, _ := s.Film().Create(filmReq1)
 	filmID2, _, _ := s.Film().Create(filmReq2)
 
-	actor, done, err := s.Actor().Find(id)
+	actor, err := s.Actor().Find(id)
 	assert.NoError(t, err)
-	assert.True(t, done)
 	assert.Contains(t, actor.Films, models.FilmBasic{FilmID: filmID1, Title: filmReq1.Title})
 	assert.Contains(t, actor.Films, models.FilmBasic{FilmID: filmID2, Title: filmReq2.Title})
+
+	actor, err = s.Actor().Find(id + 10)
+	assert.Nil(t, actor)
+	assert.EqualError(t, err, errors.Wrap(store.ErrRecordNotFound, "select actor").Error())
 }
 
 func TestActorRepository_GetAll(t *testing.T) {
@@ -133,8 +137,8 @@ func TestActorRepository_GetAll(t *testing.T) {
 		Gender:    "female",
 		BirthDate: "1997-11-03",
 	}
-	actorID1, _, _ := s.Actor().Create(actorReq1)
-	actorID2, _, _ := s.Actor().Create(actorReq2)
+	actorID1, _ := s.Actor().Create(actorReq1)
+	actorID2, _ := s.Actor().Create(actorReq2)
 
 	filmReq1 := &models.FilmRequest{
 		Title: "Cool title",
@@ -153,9 +157,9 @@ func TestActorRepository_GetAll(t *testing.T) {
 	filmID1, _, _ := s.Film().Create(filmReq1)
 	filmID2, _, _ := s.Film().Create(filmReq2)
 
-	actors, done, err := s.Actor().GetAll()
+	actors, err := s.Actor().GetAll()
 	assert.NoError(t, err)
-	assert.True(t, done)
+
 	for _, actor := range actors {
 		if actor.ID == actorID1 {
 			assert.Contains(t, actor.Films, models.FilmBasic{FilmID: filmID1, Title: filmReq1.Title})

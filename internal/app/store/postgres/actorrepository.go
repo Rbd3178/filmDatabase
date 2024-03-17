@@ -1,11 +1,14 @@
 package postgres
 
 import (
+	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
 	"github.com/Rbd3178/filmDatabase/internal/app/entities"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
+	"github.com/Rbd3178/filmDatabase/internal/app/store"
 )
 
 // ActorRepository
@@ -14,10 +17,10 @@ type ActorRepository struct {
 }
 
 // Create
-func (r *ActorRepository) Create(a *models.ActorRequest) (id int, done bool, err error) {
+func (r *ActorRepository) Create(a *models.ActorRequest) (id int, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
-		return 0, false, errors.Wrap(err, "could not start transaction")
+		return 0, errors.Wrap(err, "could not start transaction")
 	}
 
 	defer func() {
@@ -37,7 +40,7 @@ func (r *ActorRepository) Create(a *models.ActorRequest) (id int, done bool, err
 	return r.create(tx, a)
 }
 
-func (r *ActorRepository) create(tx *sqlx.Tx, a *models.ActorRequest) (int, bool, error) {
+func (r *ActorRepository) create(tx *sqlx.Tx, a *models.ActorRequest) (int, error) {
 	var id int64
 
 	err := tx.Get(
@@ -49,10 +52,10 @@ func (r *ActorRepository) create(tx *sqlx.Tx, a *models.ActorRequest) (int, bool
 	)
 
 	if err != nil {
-		return 0, false, errors.Wrap(err, "insert")
+		return 0, errors.Wrap(err, "insert")
 	}
 
-	return int(id), true, nil
+	return int(id), nil
 }
 
 // Modify
@@ -151,10 +154,10 @@ func (r *ActorRepository) delete(tx *sqlx.Tx, id int) (bool, error) {
 }
 
 // Find
-func (r *ActorRepository) Find(id int) (actor *models.Actor, done bool, err error) {
+func (r *ActorRepository) Find(id int) (actor *models.Actor, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "could not start transaction")
+		return nil, errors.Wrap(err, "could not start transaction")
 	}
 
 	defer func() {
@@ -174,7 +177,7 @@ func (r *ActorRepository) Find(id int) (actor *models.Actor, done bool, err erro
 	return r.find(tx, id)
 }
 
-func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, bool, error) {
+func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, error) {
 	var actorInfo entities.Actor
 
 	err := tx.Get(
@@ -183,7 +186,10 @@ func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, bool, error)
 		id,
 	)
 	if err != nil {
-		return nil, false, errors.Wrap(err, "select films")
+		if err == sql.ErrNoRows {
+			return nil, errors.Wrap(store.ErrRecordNotFound, "select actor")
+		}
+		return nil, errors.Wrap(err, "select actor")
 	}
 
 	actor := models.Actor{
@@ -209,17 +215,20 @@ func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, bool, error)
 	)
 
 	if err != nil {
-		return nil, false, errors.Wrap(err, "select films")
+		if err == sql.ErrNoRows {
+			return nil, errors.Wrap(store.ErrRecordNotFound, "select films")
+		}
+		return nil, errors.Wrap(err, "select films")
 	}
 
-	return &actor, true, nil
+	return &actor, nil
 }
 
 // GetAll
-func (r *ActorRepository) GetAll() (actor []models.Actor, done bool, err error) {
+func (r *ActorRepository) GetAll() (actor []models.Actor, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "could not start transaction")
+		return nil, errors.Wrap(err, "could not start transaction")
 	}
 
 	defer func() {
@@ -239,7 +248,7 @@ func (r *ActorRepository) GetAll() (actor []models.Actor, done bool, err error) 
 	return r.getAll(tx)
 }
 
-func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, bool, error) {
+func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, error) {
 	var rawActors = make([]entities.ActorWithFilm, 0)
 
 	err := tx.Select(
@@ -260,7 +269,7 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, bool, error) {
 	)
 
 	if err != nil {
-		return nil, false, errors.Wrap(err, "select")
+		return nil, errors.Wrap(err, "select")
 	}
 
 	actorsMap := make(map[int]models.Actor, 0)
@@ -286,5 +295,5 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, bool, error) {
 		actors = append(actors, actor)
 	}
 
-	return actors, true, nil
+	return actors, nil
 }

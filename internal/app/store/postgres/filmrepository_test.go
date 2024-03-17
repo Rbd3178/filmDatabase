@@ -26,8 +26,8 @@ func TestFilmRepository_Create(t *testing.T) {
 		BirthDate: "1997-11-03",
 	}
 
-	actorID1, _, _ := s.Actor().Create(actorReq1)
-	actorID2, _, _ := s.Actor().Create(actorReq2)
+	actorID1, _ := s.Actor().Create(actorReq1)
+	actorID2, _ := s.Actor().Create(actorReq2)
 
 	filmReq := &models.FilmRequest{
 		Title: "Cool title",

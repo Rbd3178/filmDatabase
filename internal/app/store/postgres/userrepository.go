@@ -6,7 +6,8 @@ import (
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 	"github.com/Rbd3178/filmDatabase/internal/app/store"
-	//"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // UserRepository
@@ -15,28 +16,83 @@ type UserRepository struct {
 }
 
 // Create
-func (r *UserRepository) Create(u *models.UserRequest) error {
+func (r *UserRepository) Create(u *models.UserRequest) (bool, error) {
+	tx, err := r.store.db.Beginx()
+	if err != nil {
+		return false, errors.Wrap(err, "could not start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			errRb := tx.Rollback()
+			if errRb != nil {
+				err = errors.Wrap(err, "error during rollback")
+				return
+			}
+
+			return
+		}
+
+		err = tx.Commit()
+	}()
+
+	return r.create(tx, u)
+}
+
+func (r *UserRepository) create(tx *sqlx.Tx, u *models.UserRequest) (bool, error) {
 	hashedPassword, err := hasher.HashPassword(u.Password)
 	if err != nil {
-		return err
+		return false, errors.Wrap(err, "encryption")
 	}
-	err = r.store.db.QueryRowx(
-		"INSERT INTO users (login, hashed_password, is_admin) VALUES ($1, $2, $3) RETURNING login",
+
+	res, err := tx.Exec(
+		"INSERT INTO users (login, hashed_password, is_admin) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
 		u.Login,
 		hashedPassword,
 		false,
-	).Scan(&u.Login)
+	)
 	if err != nil {
-		return err
+		return false, errors.Wrap(err, "insert")
 	}
 
-	return nil
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, errors.Wrap(err, "rows affected")
+	}
+	if rowsAffected == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // Find
 func (r *UserRepository) Find(login string) (*models.User, error) {
+	tx, err := r.store.db.Beginx()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			errRb := tx.Rollback()
+			if errRb != nil {
+				err = errors.Wrap(err, "error during rollback")
+				return
+			}
+
+			return
+		}
+
+		err = tx.Commit()
+	}()
+
+	return r.find(tx, login)
+}
+
+func (r *UserRepository) find(tx *sqlx.Tx, login string) (*models.User, error) {
 	u := &models.User{}
-	err := r.store.db.Get(
+	err := tx.Get(
 		u,
 		"SELECT * FROM users WHERE login = $1",
 		&login)
@@ -51,13 +107,36 @@ func (r *UserRepository) Find(login string) (*models.User, error) {
 
 // GetAll
 func (r *UserRepository) GetAll() ([]models.User, error) {
+	tx, err := r.store.db.Beginx()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			errRb := tx.Rollback()
+			if errRb != nil {
+				err = errors.Wrap(err, "error during rollback")
+				return
+			}
+
+			return
+		}
+
+		err = tx.Commit()
+	}()
+
+	return r.getAll(tx)
+}
+
+func (r *UserRepository) getAll(tx *sqlx.Tx) ([]models.User, error) {
 	users := make([]models.User, 0)
-	err := r.store.db.Select(
+	err := tx.Select(
 		&users,
 		"SELECT * FROM users",
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "select")
 	}
 	return users, nil
 }
