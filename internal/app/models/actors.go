@@ -18,6 +18,12 @@ type Actor struct {
 	Films     []FilmBasic `json:"films"`
 }
 
+// ActorBasic
+type ActorBasic struct {
+	ActorID int    `json:"actor_id" db:"actor_id"`
+	Name    string `json:"name" db:"name"`
+}
+
 // ValidateForInsert
 func (r *ActorRequest) ValidateForInsert() bool {
 	_, err := time.Parse("2006-01-02", r.BirthDate)
