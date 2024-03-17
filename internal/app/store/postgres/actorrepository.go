@@ -260,7 +260,7 @@ func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, error) {
 }
 
 // GetAll
-func (r *ActorRepository) GetAll() (actor []models.Actor, err error) {
+func (r *ActorRepository) GetAll() (actors []models.Actor, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
 		return nil, errors.Wrap(err, "could not start transaction")
@@ -298,9 +298,9 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, error) {
 		FROM 
 			actors a
 		LEFT JOIN
-			films_x_actors fxa on fxa.actor_id = a.id
+			films_x_actors fxa ON fxa.actor_id = a.id
 		LEFT JOIN
-			films f on f.id = fxa.film_id`,
+			films f ON f.id = fxa.film_id`,
 	)
 
 	if err != nil {
