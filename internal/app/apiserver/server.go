@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
@@ -35,6 +36,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *server) configureRouter() {
 	s.router.HandleFunc("/register", s.handleRegister)
 	s.router.HandleFunc("/users", s.handleUsers)
+	s.router.HandleFunc("/actors", s.handleActors)
 }
 
 func (s *server) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -51,11 +53,16 @@ func (s *server) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if len(req.Login) < 1 || len(req.Login) > 50 || len(req.Password) < 6 || len(req.Password) > 50 {
+	if !req.Validate() {
 		http.Error(w, "Invalid login or password", http.StatusUnprocessableEntity)
 		return
 	}
-	if err := s.database.User().Create(req); err != nil {
+	done, err := s.database.User().Create(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !done {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
@@ -69,8 +76,8 @@ func (s *server) handleUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, isAdmin := s.authenticateUser(w, r)
-	if !exists {
+	registered, isAdmin := s.authenticateUser(w, r)
+	if !registered {
 		return
 	}
 	if !isAdmin {
@@ -95,8 +102,8 @@ func (s *server) authenticateUser(w http.ResponseWriter, r *http.Request) (bool,
 		http.Error(w, "Incorrect login", http.StatusUnauthorized)
 		return false, false
 	}
- 
-	if !hasher.CheckPasswordHash(password, user.HashedPassword)  {
+
+	if !hasher.CheckPasswordHash(password, user.HashedPassword) {
 		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
 		http.Error(w, "Incorrect password", http.StatusUnauthorized)
 		return false, false
@@ -119,4 +126,66 @@ func (s *server) getUsers(w http.ResponseWriter) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
+}
+
+func (s *server) handleActors(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		registered, _ := s.authenticateUser(w, r)
+		if !registered {
+			return
+		}
+		s.getActors(w)
+
+	case http.MethodPost:
+		registered, isAdmin := s.authenticateUser(w, r)
+		if !registered {
+			return
+		}
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		s.addActor(w, r)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *server) getActors(w http.ResponseWriter) {
+	actors, err := s.database.Actor().GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonData, err := json.Marshal(actors)
+	
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
+	req := &models.ActorRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !req.Validate() {
+		http.Error(w, "Invalid fields in payload", http.StatusUnprocessableEntity)
+		return
+	}
+	id, err := s.database.Actor().Create(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Location: ", fmt.Sprintf("/actors/%d", id))
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Actor successfully added"))
 }
