@@ -317,6 +317,7 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, error) {
 				Gender: rawActor.Gender,
 				BirthDate: rawActor.BirthDate,
 			}
+			actor = actorsMap[rawActor.ID]
 		}
 		if rawActor.FilmId == nil {
 			continue
