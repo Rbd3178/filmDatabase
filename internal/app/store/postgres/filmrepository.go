@@ -1,9 +1,12 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
+	"github.com/Rbd3178/filmDatabase/internal/app/entities"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 )
 
@@ -53,8 +56,8 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 	for _, actorID := range f.Actors_IDs {
 		var exists bool
 		err = tx.Get(
-			&exists, 
-			"SELECT EXISTS(SELECT 1 FROM actors WHERE id = $1)", 
+			&exists,
+			"SELECT EXISTS(SELECT 1 FROM actors WHERE id = $1)",
 			actorID,
 		)
 		if err != nil {
@@ -69,7 +72,7 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 			id,
 			actorID,
 		)
-		
+
 		if err != nil {
 			return 0, false, errors.Wrap(err, "insert into films_x_actors")
 		}
@@ -84,4 +87,77 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 	}
 
 	return int(id), true, nil
+}
+
+// GetAll
+func (r *FilmRepository) GetAll(orderBy string, order string) (films []models.Film, err error) {
+	tx, err := r.store.db.Beginx()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not start transaction")
+	}
+
+	defer func() {
+		if err != nil {
+			errRb := tx.Rollback()
+			if errRb != nil {
+				err = errors.Wrap(err, "error during rollback")
+				return
+			}
+
+			return
+		}
+
+		err = tx.Commit()
+	}()
+
+	return r.getAll(tx, orderBy, order)
+}
+
+func (r *FilmRepository) getAll(tx *sqlx.Tx, orderBy string, order string) ([]models.Film, error) {
+	var rawFilms = make([]entities.FilmWithActor, 0)
+	query := `SELECT
+				f.id,
+				f.title,
+				f.description,
+				f.release_date,
+				f.rating,
+				fxa.actor_id,
+				a.name 
+			FROM 
+				films f
+			LEFT JOIN
+				films_x_actors fxa ON fxa.film_id = f.id
+			LEFT JOIN
+				actors a ON a.id = fxa.actor_id` + fmt.Sprintf(" ORDER BY f.%s %s, f.id ASC", orderBy, order)
+
+
+	err := tx.Select(&rawFilms, query)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "select")
+	}
+
+	films := make([]models.Film, 0)
+	curID := -1
+	for _, rawFilm := range rawFilms {
+		if rawFilm.ID != curID {
+			films = append(films, models.Film{
+				ID:          rawFilm.ID,
+				Title:       rawFilm.Title,
+				Description: rawFilm.Description,
+				ReleaseDate: rawFilm.ReleaseDate,
+				Rating:      rawFilm.Rating,
+			})
+			curID = rawFilm.ID
+		}
+		if rawFilm.ActorID == nil {
+			continue
+		}
+		films[len(films)-1].Actors = append(films[len(films)-1].Actors, models.ActorBasic{
+			ActorID: *rawFilm.ActorID,
+			Name:    *rawFilm.Name,
+		})
+	}
+
+	return films, nil
 }

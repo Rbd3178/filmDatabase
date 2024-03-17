@@ -293,7 +293,7 @@ func (s *server) handleFilms(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		//s.getFilms(w, r)
+		s.getFilms(w, r)
 
 	case http.MethodPost:
 		if !isAdmin {
@@ -319,12 +319,45 @@ func (s *server) addFilm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, done, err := s.database.Film().Create(req)
-	if !done || err != nil{
+	if !done || err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.Header().Set("Location: ", fmt.Sprintf("/films/%d", id))
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Film successfully added"))
+}
+
+func (s *server) getFilms(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	orderBy := query.Get("orderby")
+	if orderBy == "" {
+		orderBy = "rating"
+	}
+
+	order := query.Get("order")
+	if order == "" {
+		order = "desc"
+	}
+
+	if orderBy != "rating" && orderBy != "title" && orderBy != "release_date" || order != "asc" && order != "desc" {
+		http.Error(w, "invalid query parameters", http.StatusBadRequest)
+		return
+	}
+
+	films, err := s.database.Film().GetAll(orderBy, order)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonData, err := json.Marshal(films)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
