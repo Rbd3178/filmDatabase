@@ -159,7 +159,7 @@ func TestActorRepository_GetAll(t *testing.T) {
 
 	actors, err := s.Actor().GetAll()
 	assert.NoError(t, err)
-
+	assert.Equal(t, 2, len(actors))
 	for _, actor := range actors {
 		if actor.ID == actorID1 {
 			assert.Contains(t, actor.Films, models.FilmBasic{FilmID: filmID1, Title: filmReq1.Title})

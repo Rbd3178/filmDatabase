@@ -262,9 +262,9 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, error) {
 			f.title
 		FROM 
 			actors a
-		INNER JOIN
+		LEFT JOIN
 			films_x_actors fxa on fxa.actor_id = a.id
-		INNER JOIN
+		LEFT JOIN
 			films f on f.id = fxa.film_id`,
 	)
 
@@ -283,9 +283,12 @@ func (r *ActorRepository) getAll(tx *sqlx.Tx) ([]models.Actor, error) {
 				BirthDate: rawActor.BirthDate,
 			}
 		}
+		if rawActor.FilmId == nil {
+			continue
+		}
 		actor.Films = append(actor.Films, models.FilmBasic{
-			FilmID: rawActor.FilmId,
-			Title: rawActor.Title,
+			FilmID: *rawActor.FilmId,
+			Title: *rawActor.Title,
 		})
 		actorsMap[rawActor.ID] = actor
 	}

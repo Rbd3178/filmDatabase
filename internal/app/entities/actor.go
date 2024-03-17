@@ -6,8 +6,8 @@ type ActorWithFilm struct {
 	Name string `db:"name"`
 	Gender string `db:"gender"`
 	BirthDate string `db:"birth_date"`
-	FilmId int `db:"film_id"`
-	Title string `db:"title"`
+	FilmId *int `db:"film_id"`
+	Title *string `db:"title"`
 }
 
 // Actor
