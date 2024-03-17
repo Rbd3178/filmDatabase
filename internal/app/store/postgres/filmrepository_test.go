@@ -79,7 +79,7 @@ func TestFilmRepository_GetAll(t *testing.T) {
 	filmID1, _, _ := s.Film().Create(filmReq1)
 	filmID2, _, _ := s.Film().Create(filmReq2)
 
-	films, err := s.Film().GetAll("rating", "desc", "")
+	films, err := s.Film().GetAll("rating", "desc", "", "")
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(films))
 	for _, film := range films {

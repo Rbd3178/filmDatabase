@@ -14,7 +14,7 @@ type UserRepository interface {
 // FilmRepository
 type FilmRepository interface {
 	Create(*models.FilmRequest) (int, bool, error)
-	GetAll(string, string, string) ([]models.Film, error)
+	GetAll(string, string, string, string) ([]models.Film, error)
 }
 
 // ActorRepository
