@@ -347,7 +347,9 @@ func (s *server) getFilms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	films, err := s.database.Film().GetAll(orderBy, order)
+	searchTitle := query.Get("searchtitle")
+
+	films, err := s.database.Film().GetAll(orderBy, order, searchTitle)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

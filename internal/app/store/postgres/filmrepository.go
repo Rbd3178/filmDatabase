@@ -90,7 +90,7 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 }
 
 // GetAll
-func (r *FilmRepository) GetAll(orderBy string, order string) (films []models.Film, err error) {
+func (r *FilmRepository) GetAll(orderBy string, order string, searchTitle string) (films []models.Film, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
 		return nil, errors.Wrap(err, "could not start transaction")
@@ -110,10 +110,10 @@ func (r *FilmRepository) GetAll(orderBy string, order string) (films []models.Fi
 		err = tx.Commit()
 	}()
 
-	return r.getAll(tx, orderBy, order)
+	return r.getAll(tx, orderBy, order, searchTitle)
 }
 
-func (r *FilmRepository) getAll(tx *sqlx.Tx, orderBy string, order string) ([]models.Film, error) {
+func (r *FilmRepository) getAll(tx *sqlx.Tx, orderBy string, order string, searchTitle string) ([]models.Film, error) {
 	var rawFilms = make([]entities.FilmWithActor, 0)
 	query := `SELECT
 				f.id,
@@ -128,8 +128,7 @@ func (r *FilmRepository) getAll(tx *sqlx.Tx, orderBy string, order string) ([]mo
 			LEFT JOIN
 				films_x_actors fxa ON fxa.film_id = f.id
 			LEFT JOIN
-				actors a ON a.id = fxa.actor_id` + fmt.Sprintf(" ORDER BY f.%s %s, f.id ASC", orderBy, order)
-
+				actors a ON a.id = fxa.actor_id` + fmt.Sprintf(" WHERE f.title ILIKE '%%%s%%' ORDER BY f.%s %s, f.id ASC", searchTitle, orderBy, order)
 
 	err := tx.Select(&rawFilms, query)
 
