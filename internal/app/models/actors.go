@@ -21,7 +21,7 @@ type Actor struct {
 // ValidateForInsert
 func (r *ActorRequest) ValidateForInsert() bool {
 	_, err := time.Parse("2006-01-02", r.BirthDate)
-	validBirthDate := err == nil || r.BirthDate == ""
+	validBirthDate := err == nil
 	validName := len(r.Name) >= 1 && len(r.Name) <= 100
 	validGender := len(r.Gender) <= 20
 	return validName && validGender && validBirthDate
