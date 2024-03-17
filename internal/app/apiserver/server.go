@@ -40,6 +40,7 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/users", s.handleUsers)
 	s.router.HandleFunc("/actors", s.handleActors)
 	s.router.HandleFunc("/actors/", s.handleActorsID)
+	s.router.HandleFunc("/films", s.handleFilms)
 }
 
 func (s *server) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -282,4 +283,48 @@ func (s *server) deleteActor(w http.ResponseWriter, r *http.Request, id int) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *server) handleFilms(w http.ResponseWriter, r *http.Request) {
+	registered, isAdmin := s.authenticateUser(w, r)
+	if !registered {
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		//s.getFilms(w, r)
+
+	case http.MethodPost:
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		s.addFilm(w, r)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *server) addFilm(w http.ResponseWriter, r *http.Request) {
+	req := &models.FilmRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !req.ValidateForInsert() {
+		http.Error(w, "Invalid fields in payload", http.StatusUnprocessableEntity)
+		return
+	}
+
+	id, done, err := s.database.Film().Create(req)
+	if !done || err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Location: ", fmt.Sprintf("/films/%d", id))
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Film successfully added"))
 }
