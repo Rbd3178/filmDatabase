@@ -83,23 +83,58 @@ func (r *ActorRepository) Modify(id int, a *models.ActorRequest) (done bool, err
 }
 
 func (r *ActorRepository) modify(tx *sqlx.Tx, id int, a *models.ActorRequest) (bool, error) {
-	res, err := tx.Exec(
-		"UPDATE actors SET name=$1, gender=$2, birth_date=$3 WHERE id = $4",
-		a.Name,
-		a.Gender,
-		a.BirthDate,
-		id,
-	)
-	if err != nil {
-		return false, errors.Wrap(err, "update")
+	if a.Name != "" {
+		res, err := tx.Exec(
+			"UPDATE actors SET name=$1 WHERE id = $2",
+			a.Name,
+			id,
+		)
+		if err != nil {
+			return false, errors.Wrap(err, "update name")
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return false, errors.Wrap(err, "rows affected")
+		}
+		if rowsAffected == 0 {
+			return false, nil
+		}
 	}
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, errors.Wrap(err, "rows affected")
+	if a.Gender != "" {
+		res, err := tx.Exec(
+			"UPDATE actors SET gender=$1 WHERE id = $2",
+			a.Gender,
+			id,
+		)
+		if err != nil {
+			return false, errors.Wrap(err, "update gender")
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return false, errors.Wrap(err, "rows affected")
+		}
+		if rowsAffected == 0 {
+			return false, nil
+		}
 	}
-	if rowsAffected == 0 {
-		return false, nil
+	if a.BirthDate != "" {
+		res, err := tx.Exec(
+			"UPDATE actors SET birth_date=$1 WHERE id = $2",
+			a.BirthDate,
+			id,
+		)
+		if err != nil {
+			return false, errors.Wrap(err, "update birth date")
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return false, errors.Wrap(err, "rows affected")
+		}
+		if rowsAffected == 0 {
+			return false, nil
+		}
 	}
+	
 	return true, nil
 }
 
@@ -187,7 +222,7 @@ func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(store.ErrRecordNotFound, "select actor")
+			return nil, store.ErrRecordNotFound
 		}
 		return nil, errors.Wrap(err, "select actor")
 	}

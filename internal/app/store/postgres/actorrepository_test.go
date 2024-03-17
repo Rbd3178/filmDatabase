@@ -6,7 +6,6 @@ import (
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 	"github.com/Rbd3178/filmDatabase/internal/app/store"
 	"github.com/Rbd3178/filmDatabase/internal/app/store/postgres"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,7 +117,7 @@ func TestActorRepository_Find(t *testing.T) {
 
 	actor, err = s.Actor().Find(id + 10)
 	assert.Nil(t, actor)
-	assert.EqualError(t, err, errors.Wrap(store.ErrRecordNotFound, "select actor").Error())
+	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 }
 
 func TestActorRepository_GetAll(t *testing.T) {
