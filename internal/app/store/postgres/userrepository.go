@@ -6,6 +6,7 @@ import (
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 	"github.com/Rbd3178/filmDatabase/internal/app/store"
+	//"github.com/jmoiron/sqlx"
 )
 
 // UserRepository
@@ -19,7 +20,7 @@ func (r *UserRepository) Create(u *models.UserRequest) error {
 	if err != nil {
 		return err
 	}
-	err = r.store.db.QueryRow(
+	err = r.store.db.QueryRowx(
 		"INSERT INTO users (login, hashed_password, is_admin) VALUES ($1, $2, $3) RETURNING login",
 		u.Login,
 		hashedPassword,

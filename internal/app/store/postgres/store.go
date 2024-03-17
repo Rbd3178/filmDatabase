@@ -11,6 +11,8 @@ import (
 type Store struct {
 	db             *sqlx.DB
 	userRepository *UserRepository
+	filmRepository *FilmRepository
+	actorRepository *ActorRepository
 }
 
 // New
@@ -31,4 +33,30 @@ func (s *Store) User() store.UserRepository {
 	}
 
 	return s.userRepository
+}
+
+// Film
+func (s *Store) Film() store.FilmRepository {
+	if s.filmRepository != nil {
+		return s.filmRepository
+	}
+
+	s.filmRepository = &FilmRepository{
+		store: s,
+	}
+
+	return s.filmRepository
+}
+
+// Actor
+func (s *Store) Actor() store.ActorRepository {
+	if s.actorRepository != nil {
+		return s.actorRepository
+	}
+
+	s.actorRepository = &ActorRepository{
+		store: s,
+	}
+
+	return s.actorRepository
 }
