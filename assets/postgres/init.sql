@@ -3,7 +3,7 @@ create table if not exists films(
     title varchar(150) not null check(length(title) > 0),
     description varchar(1000),
     release_date date,
-    rating integer check (rating >= 0 and rating <= 100),
+    rating double precision check (rating >= 0 and rating <= 10),
     primary key (id)
 );
 
