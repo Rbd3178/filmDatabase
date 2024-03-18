@@ -1,3 +1,3 @@
 port = ":8080"
 log_level = "debug"
-database_url = "user=films-user password=passfordb host=localhost dbname=films-db sslmode=disable"
+database_url = "user=filmsuser password=passfordb host=192.168.1.98 dbname=filmsdb sslmode=disable"

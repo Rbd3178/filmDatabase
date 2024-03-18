@@ -1,18 +1,16 @@
-version: '3.9'
-
+version: "3.9"
 services:
   postgres:
-    image: postgres:latest
-    restart: unless-stopped
+    image: postgres:13.3
     environment:
-      POSTGRES_DB: "films-db"
-      POSTGRES_USER: "films-user"
+      POSTGRES_DB: "filmsdb"
+      POSTGRES_USER: "filmsuser"
       POSTGRES_PASSWORD: "passfordb"
+    volumes:
+      - filmsdb-data:/var/lib/postgresql/data
+      - ./assets/postgres/init.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./assets/postgres/init.sql:/docker-entrypoint-initdb.d/1-schema.sql
 
   apiserver:
     build:
@@ -24,4 +22,4 @@ services:
       - postgres
 
 volumes:
-  pgdata:
+  filmsdb-data:
