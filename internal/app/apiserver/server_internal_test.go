@@ -194,7 +194,7 @@ func TestServer_HandleActorsPost(t *testing.T) {
 			expectedCode: http.StatusCreated,
 		},
 		{
-			name:     "Request by admin with bad payload",
+			name:     "Request by admin with wrong fields format",
 			method:   http.MethodPost,
 			login:    "admin",
 			password: "adminpass",
@@ -204,6 +204,18 @@ func TestServer_HandleActorsPost(t *testing.T) {
 				"birth_date": "notadate",
 			},
 			expectedCode: http.StatusUnprocessableEntity,
+		},
+		{
+			name:     "Request by admin with wrong fields type",
+			method:   http.MethodPost,
+			login:    "admin",
+			password: "adminpass",
+			payload: map[string]interface{}{
+				"name":       1,
+				"gender":     "Gender",
+				"birth_date": "notadate",
+			},
+			expectedCode: http.StatusBadRequest,
 		},
 	}
 	for _, tc := range tests {
