@@ -186,7 +186,7 @@ func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Location: ", fmt.Sprintf("/actors/%d", id))
+	w.Header().Set("Location", fmt.Sprintf("/actors/%d", id))
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Actor successfully added"))
 }
@@ -325,7 +325,7 @@ func (s *server) addFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location: ", fmt.Sprintf("/films/%d", id))
+	w.Header().Set("Location", fmt.Sprintf("/films/%d", id))
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Film successfully added"))
 }
@@ -386,14 +386,14 @@ func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		//s.findFilm(w, r, id)
+		s.findFilm(w, r, id)
 
 	case http.MethodPatch:
 		if !isAdmin {
 			http.Error(w, "Not enough rights", http.StatusForbidden)
 			return
 		}
-		//s.modifyFilm(w, r, id)
+		s.modifyFilm(w, r, id)
 
 	case http.MethodDelete:
 		if !isAdmin {
@@ -404,7 +404,7 @@ func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*func (s *server) findFilm(w http.ResponseWriter, r *http.Request, id int) {
+func (s *server) findFilm(w http.ResponseWriter, r *http.Request, id int) {
 	actor, err := s.database.Film().Find(id)
 	if err == store.ErrRecordNotFound {
 		http.NotFound(w, r)
@@ -424,8 +424,8 @@ func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
-	req := &models.ActorRequest{}
+func (s *server) modifyFilm(w http.ResponseWriter, r *http.Request, id int) {
+	req := &models.FilmRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -435,7 +435,7 @@ func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
 		return
 	}
 
-	done, err := s.database.Actor().Modify(id, req)
+	done, err := s.database.Film().Modify(id, req)
 	if !done {
 		http.NotFound(w, r)
 		return
@@ -445,8 +445,8 @@ func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Actor information successfully modified"))
-}*/
+	w.Write([]byte("Film information successfully modified"))
+}
 
 func (s *server) deleteFilm(w http.ResponseWriter, r *http.Request, id int) {
 	done, err := s.database.Film().Delete(id)

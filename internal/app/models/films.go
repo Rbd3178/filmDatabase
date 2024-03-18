@@ -18,7 +18,7 @@ type FilmRequest struct {
 	Description string  `json:"description"`
 	ReleaseDate string  `json:"release_date"`
 	Rating      float64 `json:"rating"`
-	Actors_IDs  []int   `json:"actors_ids"`
+	ActorsIDs   []int   `json:"actors_ids"`
 }
 
 // FilmBasic
@@ -32,6 +32,16 @@ func (r *FilmRequest) ValidateForInsert() bool {
 	_, err := time.Parse("2006-01-02", r.ReleaseDate)
 	validReleaseDate := err == nil
 	validTitle := len(r.Title) >= 1 && len(r.Title) <= 150
+	validDescription := len(r.Description) <= 1000
+	validRating := r.Rating >= 0 && r.Rating <= 10
+	return validTitle && validDescription && validReleaseDate && validRating
+}
+
+// ValidateForUpdate
+func (r *FilmRequest) ValidateForUpdate() bool {
+	_, err := time.Parse("2006-01-02", r.ReleaseDate)
+	validReleaseDate := err == nil || r.ReleaseDate == ""
+	validTitle := len(r.Title) <= 150
 	validDescription := len(r.Description) <= 1000
 	validRating := r.Rating >= 0 && r.Rating <= 10
 	return validTitle && validDescription && validReleaseDate && validRating

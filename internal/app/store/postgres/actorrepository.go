@@ -251,9 +251,6 @@ func (r *ActorRepository) find(tx *sqlx.Tx, id int) (*models.Actor, error) {
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(store.ErrRecordNotFound, "select films")
-		}
 		return nil, errors.Wrap(err, "select films")
 	}
 

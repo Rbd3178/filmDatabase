@@ -68,14 +68,13 @@ func TestActorRepository_Delete(t *testing.T) {
 	id, _ := s.Actor().Create(actorReq)
 
 	filmReq := &models.FilmRequest{
-		Title: "Cool title",
+		Title:       "Cool title",
 		Description: "Detailed description",
 		ReleaseDate: "2020-01-01",
-		Rating: 6.8,
-		Actors_IDs: []int{id},
+		Rating:      6.8,
+		ActorsIDs:   []int{id},
 	}
 	s.Film().Create(filmReq)
-	
 
 	done, err := s.Actor().Delete(id)
 	assert.NoError(t, err)
@@ -101,19 +100,19 @@ func TestActorRepository_Find(t *testing.T) {
 	id, _ := s.Actor().Create(actorReq)
 
 	filmReq1 := &models.FilmRequest{
-		Title: "Cool title",
+		Title:       "Cool title",
 		Description: "Detailed description",
 		ReleaseDate: "2020-01-01",
-		Rating: 6.8,
-		Actors_IDs: []int{id},
+		Rating:      6.8,
+		ActorsIDs:   []int{id},
 	}
 
 	filmReq2 := &models.FilmRequest{
-		Title: "Cool title 2",
+		Title:       "Cool title 2",
 		Description: "Detailed description",
 		ReleaseDate: "2020-01-01",
-		Rating: 6.8,
-		Actors_IDs: []int{id},
+		Rating:      6.8,
+		ActorsIDs:   []int{id},
 	}
 
 	filmID1, _, _ := s.Film().Create(filmReq1)
@@ -149,18 +148,18 @@ func TestActorRepository_GetAll(t *testing.T) {
 	actorID2, _ := s.Actor().Create(actorReq2)
 
 	filmReq1 := &models.FilmRequest{
-		Title: "Cool title",
+		Title:       "Cool title",
 		Description: "Detailed description",
 		ReleaseDate: "2020-01-01",
-		Rating: 6.8,
-		Actors_IDs: []int{actorID1},
+		Rating:      6.8,
+		ActorsIDs:   []int{actorID1},
 	}
 	filmReq2 := &models.FilmRequest{
-		Title: "Cool title 2",
+		Title:       "Cool title 2",
 		Description: "Detailed description",
 		ReleaseDate: "2020-01-01",
-		Rating: 6.8,
-		Actors_IDs: []int{actorID1, actorID2},
+		Rating:      6.8,
+		ActorsIDs:   []int{actorID1, actorID2},
 	}
 	filmID1, _, _ := s.Film().Create(filmReq1)
 	filmID2, _, _ := s.Film().Create(filmReq2)
