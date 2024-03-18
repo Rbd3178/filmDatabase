@@ -95,7 +95,7 @@ func (r *UserRepository) find(tx *sqlx.Tx, login string) (*models.User, error) {
 	err := tx.Get(
 		u,
 		"SELECT * FROM users WHERE login = $1",
-		&login)
+		login)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, store.ErrRecordNotFound
