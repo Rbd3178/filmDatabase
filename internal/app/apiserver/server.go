@@ -41,6 +41,7 @@ func (s *server) configureRouter() {
 	s.router.HandleFunc("/actors", s.handleActors)
 	s.router.HandleFunc("/actors/", s.handleActorsID)
 	s.router.HandleFunc("/films", s.handleFilms)
+	s.router.HandleFunc("/films/", s.handleFilmsID)
 }
 
 func (s *server) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -363,4 +364,99 @@ func (s *server) getFilms(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
+}
+
+func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) != 3 {
+		http.NotFound(w, r)
+		return
+	}
+
+	id, err := strconv.Atoi(parts[2])
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	registered, isAdmin := s.authenticateUser(w, r)
+	if !registered {
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		//s.findFilm(w, r, id)
+
+	case http.MethodPatch:
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		//s.modifyFilm(w, r, id)
+
+	case http.MethodDelete:
+		if !isAdmin {
+			http.Error(w, "Not enough rights", http.StatusForbidden)
+			return
+		}
+		s.deleteFilm(w, r, id)
+	}
+}
+
+/*func (s *server) findFilm(w http.ResponseWriter, r *http.Request, id int) {
+	actor, err := s.database.Film().Find(id)
+	if err == store.ErrRecordNotFound {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonData, err := json.Marshal(actor)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
+	req := &models.ActorRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !req.ValidateForUpdate() {
+		http.Error(w, "Invalid fields in payload", http.StatusUnprocessableEntity)
+		return
+	}
+
+	done, err := s.database.Actor().Modify(id, req)
+	if !done {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Actor information successfully modified"))
+}*/
+
+func (s *server) deleteFilm(w http.ResponseWriter, r *http.Request, id int) {
+	done, err := s.database.Film().Delete(id)
+	if !done {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
