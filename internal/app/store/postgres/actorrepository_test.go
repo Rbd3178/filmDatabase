@@ -115,8 +115,8 @@ func TestActorRepository_Find(t *testing.T) {
 		ActorsIDs:   []int{id},
 	}
 
-	filmID1, _, _ := s.Film().Create(filmReq1)
-	filmID2, _, _ := s.Film().Create(filmReq2)
+	filmID1, _ := s.Film().Create(filmReq1)
+	filmID2, _ := s.Film().Create(filmReq2)
 
 	actor, err := s.Actor().Find(id)
 	assert.NoError(t, err)
@@ -161,8 +161,8 @@ func TestActorRepository_GetAll(t *testing.T) {
 		Rating:      6.8,
 		ActorsIDs:   []int{actorID1, actorID2},
 	}
-	filmID1, _, _ := s.Film().Create(filmReq1)
-	filmID2, _, _ := s.Film().Create(filmReq2)
+	filmID1, _ := s.Film().Create(filmReq1)
+	filmID2, _ := s.Film().Create(filmReq2)
 
 	actors, err := s.Actor().GetAll()
 	assert.NoError(t, err)

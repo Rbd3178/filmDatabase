@@ -38,9 +38,8 @@ func TestFilmRepository_Create(t *testing.T) {
 		ActorsIDs:   []int{actorID1, actorID2, actorID2 + 10},
 	}
 
-	id, done, err := s.Film().Create(filmReq)
+	id, err := s.Film().Create(filmReq)
 	assert.NoError(t, err)
-	assert.True(t, done)
 	assert.NotNil(t, id)
 }
 
@@ -77,8 +76,8 @@ func TestFilmRepository_GetAll(t *testing.T) {
 		Rating:      6.8,
 		ActorsIDs:   []int{actorID1, actorID2},
 	}
-	filmID1, _, _ := s.Film().Create(filmReq1)
-	filmID2, _, _ := s.Film().Create(filmReq2)
+	filmID1, _ := s.Film().Create(filmReq1)
+	filmID2, _ := s.Film().Create(filmReq2)
 
 	films, err := s.Film().GetAll("rating", "desc", "", "")
 	assert.NoError(t, err)
@@ -115,7 +114,7 @@ func TestFilmRepository_Delete(t *testing.T) {
 		Rating:      7.8,
 		ActorsIDs:   []int{actorID},
 	}
-	filmId, _, _ := s.Film().Create(filmReq)
+	filmId, _ := s.Film().Create(filmReq)
 
 	done, err := s.Film().Delete(filmId)
 	assert.NoError(t, err)
@@ -153,7 +152,7 @@ func TestFilmRepository_Find(t *testing.T) {
 		ActorsIDs:   []int{actorID1, actorID2},
 	}
 
-	filmID, _, _ := s.Film().Create(filmReq)
+	filmID, _ := s.Film().Create(filmReq)
 
 	film, err := s.Film().Find(filmID)
 	assert.NoError(t, err)
@@ -191,7 +190,7 @@ func TestFilmRepository_Modify(t *testing.T) {
 		Rating:      6.8,
 		ActorsIDs:   []int{actorID1, actorID2},
 	}
-	filmID, _, _ := s.Film().Create(filmReq)
+	filmID, _ := s.Film().Create(filmReq)
 
 	filmReqMod := &models.FilmRequest{
 		Description: "Even more detailed description",

@@ -13,7 +13,7 @@ type UserRepository interface {
 
 // FilmRepository
 type FilmRepository interface {
-	Create(*models.FilmRequest) (int, bool, error)
+	Create(*models.FilmRequest) (int, error)
 	GetAll(string, string, string, string) ([]models.Film, error)
 	Delete(int) (bool, error)
 	Find(int) (*models.Film, error)

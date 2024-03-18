@@ -18,10 +18,10 @@ type FilmRepository struct {
 }
 
 // Create
-func (r *FilmRepository) Create(f *models.FilmRequest) (id int, done bool, err error) {
+func (r *FilmRepository) Create(f *models.FilmRequest) (id int, err error) {
 	tx, err := r.store.db.Beginx()
 	if err != nil {
-		return 0, false, errors.Wrap(err, "could not start transaction")
+		return 0, errors.Wrap(err, "could not start transaction")
 	}
 
 	defer func() {
@@ -40,7 +40,7 @@ func (r *FilmRepository) Create(f *models.FilmRequest) (id int, done bool, err e
 	return r.create(tx, f)
 }
 
-func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, error) {
+func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, error) {
 	var id int64
 	err := tx.Get(
 		&id,
@@ -52,7 +52,7 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 	)
 
 	if err != nil {
-		return 0, false, errors.Wrap(err, "insert into films")
+		return 0, errors.Wrap(err, "insert into films")
 	}
 
 	for _, actorID := range f.ActorsIDs {
@@ -63,32 +63,25 @@ func (r *FilmRepository) create(tx *sqlx.Tx, f *models.FilmRequest) (int, bool, 
 			actorID,
 		)
 		if err != nil {
-			return 0, false, errors.Wrap(err, "check if actor exists")
+			return 0, errors.Wrap(err, "check if actor exists")
 		}
 		if !exists {
 			continue
 		}
 
-		res, err := tx.Exec(
+		_, err := tx.Exec(
 			"INSERT INTO films_x_actors (film_id, actor_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
 			id,
 			actorID,
 		)
 
 		if err != nil {
-			return 0, false, errors.Wrap(err, "insert into films_x_actors")
+			return 0, errors.Wrap(err, "insert into films_x_actors")
 		}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return 0, false, errors.Wrap(err, "rows affected films_x_actors")
-		}
-		if rowsAffected == 0 {
-			return 0, false, nil
-		}
 	}
 
-	return int(id), true, nil
+	return int(id), nil
 }
 
 // GetAll
