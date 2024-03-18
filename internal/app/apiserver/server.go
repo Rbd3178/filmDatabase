@@ -67,6 +67,7 @@ func (s *server) registerUser(w http.ResponseWriter, r *http.Request) {
 	done, err := s.database.User().Create(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when creating user")
 		return
 	}
 	if !done {
@@ -106,9 +107,15 @@ func (s *server) authenticateUser(w http.ResponseWriter, r *http.Request) (bool,
 	}
 
 	user, err := s.database.User().Find(login)
-	if err != nil {
+	if err == store.ErrRecordNotFound {
 		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
 		http.Error(w, "Incorrect login", http.StatusUnauthorized)
+		return false, false
+	}
+	if err != nil {
+		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when finding user")
 		return false, false
 	}
 
@@ -125,12 +132,14 @@ func (s *server) getUsers(w http.ResponseWriter) {
 	users, err := s.database.User().GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when getting all users")
 		return
 	}
 
 	jsonData, err := json.Marshal(users)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when marshalling json")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -165,12 +174,14 @@ func (s *server) getActors(w http.ResponseWriter) {
 	actors, err := s.database.Actor().GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when getting all actors")
 		return
 	}
 
 	jsonData, err := json.Marshal(actors)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when marshalling json")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -190,6 +201,7 @@ func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
 	id, err := s.database.Actor().Create(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when creating actor")
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/actors/%d", id))
@@ -245,12 +257,14 @@ func (s *server) findActor(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when finding actor")
 		return
 	}
 
 	jsonData, err := json.Marshal(actor)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when marshalling json")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -275,6 +289,7 @@ func (s *server) modifyActor(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when modifying actor")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -289,6 +304,7 @@ func (s *server) deleteActor(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when deleting actor")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -332,6 +348,7 @@ func (s *server) addFilm(w http.ResponseWriter, r *http.Request) {
 	id, err := s.database.Film().Create(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when creating film")
 		return
 	}
 
@@ -364,12 +381,14 @@ func (s *server) getFilms(w http.ResponseWriter, r *http.Request) {
 	films, err := s.database.Film().GetAll(orderBy, order, searchTitle, searchActor)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when getting all films")
 		return
 	}
 
 	jsonData, err := json.Marshal(films)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when marshalling json")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -424,12 +443,14 @@ func (s *server) findFilm(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when finding film")
 		return
 	}
 
 	jsonData, err := json.Marshal(actor)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when marshalling json")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -454,6 +475,7 @@ func (s *server) modifyFilm(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when modifying film")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -468,6 +490,7 @@ func (s *server) deleteFilm(w http.ResponseWriter, r *http.Request, id int) {
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.WithError(err).Info("Error when deleting film")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
