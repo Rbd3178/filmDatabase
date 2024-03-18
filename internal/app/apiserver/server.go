@@ -319,8 +319,8 @@ func (s *server) addFilm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, done, err := s.database.Film().Create(req)
-	if !done || err != nil {
+	id, err := s.database.Film().Create(req)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
