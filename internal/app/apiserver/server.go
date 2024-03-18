@@ -246,6 +246,9 @@ func (s *server) handleActorsID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.deleteActor(w, r, id)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -432,6 +435,9 @@ func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.deleteFilm(w, r, id)
+	
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
