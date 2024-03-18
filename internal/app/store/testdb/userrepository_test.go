@@ -16,8 +16,9 @@ func TestUserRepository_Create(t *testing.T) {
 		Login:    "JohnDoe",
 		Password: "verysecret",
 	}
-
-	assert.NoError(t, s.User().Create(userReq))
+	done, err := s.User().Create(userReq)
+	assert.True(t, done)
+	assert.NoError(t, err)
 }
 
 func TestUserRepository_Find(t *testing.T) {

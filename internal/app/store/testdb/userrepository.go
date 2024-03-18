@@ -1,8 +1,6 @@
 package testdb
 
 import (
-	"errors"
-
 	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 	"github.com/Rbd3178/filmDatabase/internal/app/store"
@@ -15,22 +13,22 @@ type UserRepository struct {
 }
 
 // Create
-func (r *UserRepository) Create(u *models.UserRequest) error {
+func (r *UserRepository) Create(u *models.UserRequest) (bool, error) {
 	hashedPassword, err := hasher.HashPassword(u.Password)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if _, ok := r.users[u.Login]; ok {
-		return errors.New("login is taken")
+		return false, nil
 	}
 	user := &models.User{
-		Login: u.Login,
+		Login:          u.Login,
 		HashedPassword: hashedPassword,
-		IsAdmin: false,
+		IsAdmin:        false,
 	}
 	r.users[u.Login] = user
 
-	return nil
+	return true, nil
 }
 
 // Find ...
@@ -45,7 +43,7 @@ func (r *UserRepository) Find(login string) (*models.User, error) {
 
 // GetAll
 func (r *UserRepository) GetAll() ([]models.User, error) {
-	users := make([]models.User, 0) 
+	users := make([]models.User, 0)
 	for _, u := range r.users {
 		users = append(users, *u)
 	}
