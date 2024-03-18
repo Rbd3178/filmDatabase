@@ -68,7 +68,7 @@ func (s *server) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !done {
-		http.Error(w, err.Error(), http.StatusConflict)
+		http.Error(w, "Login already taken", http.StatusConflict)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
