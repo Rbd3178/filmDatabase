@@ -120,7 +120,7 @@ func TestFilmRepository_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, done)
 
-	done, err = s.Actor().Delete(filmId)
+	done, err = s.Film().Delete(filmId)
 	assert.NoError(t, err)
 	assert.False(t, done)
 }
