@@ -1,6 +1,7 @@
 package testdb
 
 import (
+	"github.com/Rbd3178/filmDatabase/internal/app/hasher"
 	"github.com/Rbd3178/filmDatabase/internal/app/models"
 	"github.com/Rbd3178/filmDatabase/internal/app/store"
 )
@@ -26,6 +27,18 @@ func (s *Store) User() store.UserRepository {
 	s.userRepository = &UserRepository{
 		store: s,
 		users: make(map[string]*models.User),
+	}
+	normalHashedPass, _ := hasher.HashPassword("correct")
+	adminHashedPass, _ := hasher.HashPassword("adminpass")
+	s.userRepository.users["normal"] = &models.User{
+		Login: "normal",
+		HashedPassword: normalHashedPass,
+		IsAdmin: false,
+	}
+	s.userRepository.users["admin"] = &models.User{
+		Login: "admin",
+		HashedPassword: adminHashedPass,
+		IsAdmin: true,
 	}
 
 	return s.userRepository
