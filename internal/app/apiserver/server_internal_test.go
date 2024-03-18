@@ -193,12 +193,157 @@ func TestServer_HandleActorsPost(t *testing.T) {
 			},
 			expectedCode: http.StatusCreated,
 		},
+		{
+			name:     "Request by admin with bad payload",
+			method:   http.MethodPost,
+			login:    "admin",
+			password: "adminpass",
+			payload: map[string]interface{}{
+				"name":       "Name",
+				"gender":     "Gender",
+				"birth_date": "notadate",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			b := &bytes.Buffer{}
 			json.NewEncoder(b).Encode(tc.payload)
 			req, _ := http.NewRequest(tc.method, "/actors", b)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleFilmsGet(t *testing.T) {
+	s := newServer(testdb.New())
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "Request by normal user",
+			method:       http.MethodGet,
+			login:        "normal",
+			password:     "correct",
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Request by admin",
+			method:       http.MethodGet,
+			login:        "admin",
+			password:     "adminpass",
+			expectedCode: http.StatusOK,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tc.method, "/films", nil)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleFilmsPost(t *testing.T) {
+	s := newServer(testdb.New())
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		payload      any
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:     "Request by normal user",
+			method:   http.MethodPost,
+			login:    "normal",
+			password: "correct",
+			payload: map[string]interface{}{
+				"title":        "Title",
+				"description":  "Description",
+				"release_date": "2024-03-18",
+				"rating":       5.2,
+				"actors_ids": []int{1, 2},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name:     "Request by admin",
+			method:   http.MethodPost,
+			login:    "admin",
+			password: "adminpass",
+			payload: map[string]interface{}{
+				"title":        "Title",
+				"description":  "Description",
+				"release_date": "2024-03-18",
+				"rating":       5.2,
+				"actors_ids": []int{1, 2},
+			},
+			expectedCode: http.StatusCreated,
+		},
+		{
+			name:     "Request by admin with wrong field types",
+			method:   http.MethodPost,
+			login:    "admin",
+			password: "adminpass",
+			payload: map[string]interface{}{
+				"title":        "Title",
+				"description":  "Description",
+				"release_date": 22,
+				"rating":       "notanumber",
+				"actors_ids": []int{1, 2},
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:     "Request by admin with invalid fields",
+			method:   http.MethodPost,
+			login:    "admin",
+			password: "adminpass",
+			payload: map[string]interface{}{
+				"title":        "Title",
+				"description":  "Description",
+				"release_date": "some",
+				"rating":       5,
+				"actors_ids": []int{1, 2},
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := &bytes.Buffer{}
+			json.NewEncoder(b).Encode(tc.payload)
+			req, _ := http.NewRequest(tc.method, "/films", b)
 			req.SetBasicAuth(tc.login, tc.password)
 			rec := httptest.NewRecorder()
 			s.ServeHTTP(rec, req)
