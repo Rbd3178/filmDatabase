@@ -5,14 +5,23 @@ services:
     image: postgres:latest
     restart: unless-stopped
     environment:
-      POSTGRES_DB: "film-db"
-      POSTGRES_USER: "film-user"
+      POSTGRES_DB: "films-db"
+      POSTGRES_USER: "films-user"
       POSTGRES_PASSWORD: "passfordb"
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./assets/postgres/init.sql:/docker-entrypoint-initdb.d/1-schema.sql
+
+  apiserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
 
 volumes:
   pgdata:

@@ -1,3 +1,3 @@
 port = ":8080"
 log_level = "debug"
-database_url = "user=postgres password=postgres host=localhost dbname=filmdb_local sslmode=disable"
+database_url = "user=films-user password=passfordb host=localhost dbname=films-db sslmode=disable"
