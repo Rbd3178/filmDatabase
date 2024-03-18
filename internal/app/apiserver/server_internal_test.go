@@ -292,7 +292,7 @@ func TestServer_HandleFilmsPost(t *testing.T) {
 				"description":  "Description",
 				"release_date": "2024-03-18",
 				"rating":       5.2,
-				"actors_ids": []int{1, 2},
+				"actors_ids":   []int{1, 2},
 			},
 			expectedCode: http.StatusForbidden,
 		},
@@ -306,7 +306,7 @@ func TestServer_HandleFilmsPost(t *testing.T) {
 				"description":  "Description",
 				"release_date": "2024-03-18",
 				"rating":       5.2,
-				"actors_ids": []int{1, 2},
+				"actors_ids":   []int{1, 2},
 			},
 			expectedCode: http.StatusCreated,
 		},
@@ -320,7 +320,7 @@ func TestServer_HandleFilmsPost(t *testing.T) {
 				"description":  "Description",
 				"release_date": 22,
 				"rating":       "notanumber",
-				"actors_ids": []int{1, 2},
+				"actors_ids":   []int{1, 2},
 			},
 			expectedCode: http.StatusBadRequest,
 		},
@@ -334,7 +334,7 @@ func TestServer_HandleFilmsPost(t *testing.T) {
 				"description":  "Description",
 				"release_date": "some",
 				"rating":       5,
-				"actors_ids": []int{1, 2},
+				"actors_ids":   []int{1, 2},
 			},
 			expectedCode: http.StatusUnprocessableEntity,
 		},
@@ -344,6 +344,524 @@ func TestServer_HandleFilmsPost(t *testing.T) {
 			b := &bytes.Buffer{}
 			json.NewEncoder(b).Encode(tc.payload)
 			req, _ := http.NewRequest(tc.method, "/films", b)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleActorsIDGet(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"name":       "Name",
+		"gender":     "Gender",
+		"birth_date": "2024-03-18",
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/actors", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "Request by normal user",
+			method:       http.MethodGet,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Request by normal user with incorrect location",
+			method:       http.MethodGet,
+			login:        "normal",
+			password:     "correct",
+			location:     location + "2",
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:         "Request by admin",
+			method:       http.MethodGet,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location,
+			expectedCode: http.StatusOK,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tc.method, tc.location, nil)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleFilmsIDGet(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"title":        "Title",
+		"description":  "Description",
+		"release_date": "2024-03-18",
+		"rating":       5.2,
+		"actors_ids":   []int{1, 2},
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/films", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "Request by normal user",
+			method:       http.MethodGet,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Request by normal user with incorrect location",
+			method:       http.MethodGet,
+			login:        "normal",
+			password:     "correct",
+			location:     location + "2",
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:         "Request by admin",
+			method:       http.MethodGet,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location,
+			expectedCode: http.StatusOK,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tc.method, tc.location, nil)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleActorsIDDelete(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"name":       "Name",
+		"gender":     "Gender",
+		"birth_date": "2024-03-18",
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/actors", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "Request by normal user",
+			method:       http.MethodDelete,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name:         "Request by admin with incorrect location",
+			method:       http.MethodDelete,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location + "2",
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:         "Request by admin",
+			method:       http.MethodDelete,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location,
+			expectedCode: http.StatusNoContent,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tc.method, tc.location, nil)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleFilmsIDDelete(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"title":        "Title",
+		"description":  "Description",
+		"release_date": "2024-03-18",
+		"rating":       5.2,
+		"actors_ids":   []int{1, 2},
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/films", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "Request by normal user",
+			method:       http.MethodDelete,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name:         "Request by admin with incorrect location",
+			method:       http.MethodDelete,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location + "2",
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:         "Request by admin",
+			method:       http.MethodDelete,
+			login:        "admin",
+			password:     "adminpass",
+			location:     location,
+			expectedCode: http.StatusNoContent,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tc.method, tc.location, nil)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleActorsIDModify(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"name":       "Name",
+		"gender":     "Gender",
+		"birth_date": "2024-03-18",
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/actors", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		payload      any
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:     "Request by normal user",
+			method:   http.MethodPatch,
+			login:    "normal",
+			password: "correct",
+			location: location,
+			payload: map[string]interface{}{
+				"name":       "NewName",
+				"gender":     "Gender",
+				"birth_date": "2020-03-18",
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name:     "Request by admin with incorrect location",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location + "2",
+			payload: map[string]interface{}{
+				"name":       "NewName",
+				"gender":     "Gender",
+				"birth_date": "2020-03-18",
+			},
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:     "Request by admin",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"name":       "NewName",
+				"gender":     "Gender",
+				"birth_date": "2020-03-18",
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:     "Request by admin with wrong field types",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"name":       "NewName",
+				"gender":     2,
+				"birth_date": "notdate",
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:     "Request by admin with wrong field format",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"name":       "NewName",
+				"gender":     "gender",
+				"birth_date": "notdate",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := &bytes.Buffer{}
+			json.NewEncoder(b).Encode(tc.payload)
+			req, _ := http.NewRequest(tc.method, tc.location, b)
+			req.SetBasicAuth(tc.login, tc.password)
+			rec := httptest.NewRecorder()
+			s.ServeHTTP(rec, req)
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.NotNil(t, rec.Body)
+		})
+	}
+}
+
+func TestServer_HandleFilmsIDModify(t *testing.T) {
+	s := newServer(testdb.New())
+
+	payload := map[string]interface{}{
+		"title":        "Title",
+		"description":  "Description",
+		"release_date": "2024-03-18",
+		"rating":       5.2,
+		"actors_ids":   []int{1, 2},
+	}
+	b := &bytes.Buffer{}
+	json.NewEncoder(b).Encode(payload)
+	req, _ := http.NewRequest(http.MethodPost, "/films", b)
+	req.SetBasicAuth("admin", "adminpass")
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	location := rec.Header().Get("Location")
+
+	var tests = []struct {
+		name         string
+		method       string
+		login        string
+		password     string
+		location     string
+		payload      any
+		expectedCode int
+	}{
+		{
+			name:         "Request with incorrect method",
+			method:       http.MethodPut,
+			login:        "normal",
+			password:     "correct",
+			location:     location,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:     "Request by normal user",
+			method:   http.MethodPatch,
+			login:    "normal",
+			password: "correct",
+			location: location,
+			payload: map[string]interface{}{
+				"title":        "Title",
+				"description":  "Description",
+				"release_date": "2024-03-18",
+				"rating":       5.2,
+				"actors_ids":   []int{1, 2},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			name:     "Request by admin with incorrect location",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location + "2",
+			payload: map[string]interface{}{
+				"title":        "New Title",
+				"description":  "Description2",
+				"release_date": "2022-03-18",
+				"rating":       9.0,
+				"actors_ids":   []int{1, 2, 3},
+			},
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			name:     "Request by admin",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"title":        "New Title",
+				"description":  "Description2",
+				"release_date": "2022-03-18",
+				"rating":       9.0,
+				"actors_ids":   []int{1, 2, 3},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:     "Request by admin with wrong field types",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"title":        "New Title",
+				"description":  "Description2",
+				"release_date": 22,
+				"rating":       "nan",
+				"actors_ids":   []int{1, 2, 3},
+			},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:     "Request by admin with wrong field format",
+			method:   http.MethodPatch,
+			login:    "admin",
+			password: "adminpass",
+			location: location,
+			payload: map[string]interface{}{
+				"title":        "New Title",
+				"description":  "Description2",
+				"release_date": "notadate",
+				"rating":       9.0,
+				"actors_ids":   []int{1, 2, 3},
+			},
+			expectedCode: http.StatusUnprocessableEntity,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b := &bytes.Buffer{}
+			json.NewEncoder(b).Encode(tc.payload)
+			req, _ := http.NewRequest(tc.method, tc.location, b)
 			req.SetBasicAuth(tc.login, tc.password)
 			rec := httptest.NewRecorder()
 			s.ServeHTTP(rec, req)
