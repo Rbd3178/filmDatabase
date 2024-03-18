@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: Movie Database
   description: This API provides endpoints for accessing a movies and actors database.
-  version: 0.0.2
+  version: 1.0.0
   
 securityDefinitions:
   basicAuth:
@@ -29,7 +29,7 @@ definitions:
           properties:
             film_id:
               type: integer
-            film_name:
+            title:
               type: string
   ActorRequest:
     type: object
@@ -61,7 +61,7 @@ definitions:
           properties:
             actor_id:
               type: integer
-            actor_name:
+            name:
               type: string
   FilmRequest:
     type: object
@@ -72,6 +72,9 @@ definitions:
         type: string
       release_date:
         type: string
+        format: date
+      rating:
+        type: number
       actors_ids:
         type: array
         items:
@@ -83,8 +86,8 @@ definitions:
         type: string
       hashed_password:
         type: string
-      role:
-        type: string
+      is_admin:
+        type: boolean
   UserRequest:
     type: object
     properties:
@@ -115,6 +118,8 @@ paths:
               $ref: "#/definitions/Actor"
         401:
           $ref: '#/responses/UnauthorizedError'
+        500:
+          description: Internal server error
     post:
       summary: Create a new actor
       security:
@@ -135,10 +140,16 @@ paths:
               type: string
               format: uri
               description: URI of a created resource
+        400:
+          description: Bad request. Wrong field types in payload.
+        422:
+          description: Unprocessable entity. Wrong field format in payload.
         401:
           $ref: '#/responses/UnauthorizedError'
         403:
-          description: Forbidden
+          description: Forbidden. User must be admin.
+        500:
+          description: Internal server error
   /actors/{id}:
     get:
       summary: Get actor by id
@@ -158,6 +169,8 @@ paths:
           $ref: '#/responses/UnauthorizedError'
         404:
           description: Resource not found.
+        500:
+          description: Internal server error
     patch:
       summary: Change actor information
       security:
@@ -178,16 +191,18 @@ paths:
       responses:
         200:
           description: ok
-          schema:
-            $ref: '#/definitions/Actor'
         400:
-          description: Bad request
+          description: Bad request. Wrong field types in payload.
+        422:
+          description: Unprocessable entity. Wrong field format in payload.
         401:
           $ref: '#/responses/UnauthorizedError'
-        403:
-          description: Forbidden
         404:
           description: Resource not found
+        403:
+          description: Forbidden. User must be admin.
+        500:
+          description: Internal server error
     delete:
       summary: Delete actor
       security:
@@ -203,9 +218,11 @@ paths:
         401:
           $ref: '#/responses/UnauthorizedError'
         403:
-          description: Forbidden
+          description: Forbidden. User must be admin.
         404:
           description: Resource not found
+        500:
+          description: Internal server error
   /films:
     get:
       summary: Get a list of films
@@ -219,13 +236,13 @@ paths:
         - in: query
           name: orderby
           type: string
-          description: Can be title; date; rating.
+          description: Can be title; release_date; rating.
         - in: query
-          name: actor
+          name: searchactor
           type: string
           description: Used to search films by actor name fragment.
         - in: query
-          name: title
+          name: searchtitle
           type: string
           description: Used to search films by title fragment.
       responses:
@@ -235,8 +252,12 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Film"
+        400:
+          description: Bad request. Invalid query parameters.
         401:
           $ref: '#/responses/UnauthorizedError'
+        500:
+          description: Internal server error
     post:
       summary: Add a film
       security:
@@ -257,10 +278,16 @@ paths:
               type: string
               format: uri
               description: URI of a created resource
+        400:
+          description: Bad request. Wrong field types in payload.
+        422:
+          description: Unprocessable entity. Wrong field format in payload.
         401:
           $ref: '#/responses/UnauthorizedError'
         403:
-          description: Forbidden
+          description: Forbidden. User must be admin.
+        500:
+          description: Internal server error
   /films/{id}:
     get:
       summary: Get film by id
@@ -280,6 +307,8 @@ paths:
           $ref: '#/responses/UnauthorizedError'
         404:
           description: Resource not found.
+        500:
+          description: Internal server error
     patch:
       summary: Change film information
       security:
@@ -300,16 +329,18 @@ paths:
       responses:
         200:
           description: ok
-          schema:
-            $ref: '#/definitions/Film'
         400:
-          description: Bad request
+          description: Bad request. Wrong field types in payload.
+        422:
+          description: Unprocessable entity. Wrong field format in payload.
         401:
           $ref: '#/responses/UnauthorizedError'
-        403:
-          description: Forbidden
         404:
           description: Resource not found
+        403:
+          description: Forbidden. User must be admin.
+        500:
+          description: Internal server error
     delete:
       summary: Delete film
       security:
@@ -325,9 +356,11 @@ paths:
         401:
           $ref: '#/responses/UnauthorizedError'
         403:
-          description: Forbidden
+          description: Forbidden. User must be admin.
         404:
           description: Resource not found
+        500:
+          description: Internal server error
   /users:
     get:
       summary: Get all users
@@ -343,7 +376,9 @@ paths:
         401:
           $ref: '#/responses/UnauthorizedError'
         403:
-          description: Forbidden
+          description: Forbidden. User must be admin.
+        500:
+          description: Internal server error
     
   /register:      
     post:
@@ -360,7 +395,10 @@ paths:
         201:
           description: Created
         400:
-          description: Bad request
+          description: Bad request. Wrong field types in payload.
+        422:
+          description: Unprocessable entity. Wrong field format in payload.
         409:
-          description: Conflict      
-          
+          description: Conflict. Login is taken.   
+        500:
+          description: Internal server error
