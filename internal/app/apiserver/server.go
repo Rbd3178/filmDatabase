@@ -45,6 +45,8 @@ func (s *server) configureRouter() {
 }
 
 func (s *server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	if r.Method == http.MethodPost {
 		s.registerUser(w, r)
 	} else {
@@ -76,6 +78,8 @@ func (s *server) registerUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleUsers(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -134,6 +138,8 @@ func (s *server) getUsers(w http.ResponseWriter) {
 }
 
 func (s *server) handleActors(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	registered, isAdmin := s.authenticateUser(w, r)
 	if !registered {
 		return
@@ -192,6 +198,8 @@ func (s *server) addActor(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleActorsID(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 3 {
 		http.NotFound(w, r)
@@ -287,6 +295,8 @@ func (s *server) deleteActor(w http.ResponseWriter, r *http.Request, id int) {
 }
 
 func (s *server) handleFilms(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	registered, isAdmin := s.authenticateUser(w, r)
 	if !registered {
 		return
@@ -367,6 +377,8 @@ func (s *server) getFilms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleFilmsID(w http.ResponseWriter, r *http.Request) {
+	s.logRequest(r)
+
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 3 {
 		http.NotFound(w, r)
@@ -459,4 +471,13 @@ func (s *server) deleteFilm(w http.ResponseWriter, r *http.Request, id int) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *server) logRequest(r *http.Request) {
+	s.logger.WithFields(logrus.Fields{
+        "method": r.Method,
+        "path":   r.URL.Path,
+        "query":  r.URL.RawQuery,
+        "remote": r.RemoteAddr,
+    }).Info("Incoming request")
 }
